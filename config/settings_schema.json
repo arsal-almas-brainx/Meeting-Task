@@ -124,6 +124,17 @@
         "content": "t:content.responsive_font_sizes"
       },
       {
+        "type": "range",
+        "id": "type_mobile_heading_scale",
+        "label": "t:settings.type_mobile_heading_scale",
+        "info": "t:info.type_mobile_heading_scale",
+        "min": 40,
+        "max": 100,
+        "step": 5,
+        "unit": "%",
+        "default": 100
+      },
+      {
         "type": "header",
         "content": "t:content.paragraph"
       },
@@ -1111,6 +1122,10 @@
         "id": "page_width",
         "label": "t:settings.page_width",
         "options": [
+          {
+            "value": "compact",
+            "label": "t:options.compact"
+          },
           {
             "value": "narrow",
             "label": "t:options.narrow"

@@ -123,6 +123,22 @@
     "sort": "Sort"
   },
   "blocks": {
+    "countdown": {
+      "label": "Offer countdown",
+      "days": "Days",
+      "hours": "Hours",
+      "minutes": "Minutes",
+      "seconds": "Seconds",
+      "remaining": "{{ days }} days, {{ hours }} hours and {{ minutes }} minutes remaining",
+      "invalid_date": "Countdown hidden: enter an end date like 2026-11-30 23:59."
+    },
+    "product_tabs": {
+      "label": "Product categories",
+      "empty": "No products in this collection yet."
+    },
+    "comparison_table": {
+      "not_offered": "Not offered"
+    },
     "contact_form": {
       "name": "Name",
       "email": "Email",

@@ -1,0 +1,117 @@
+{% comment %}
+  Section contract.
+  Slim promotional strip for the header group: holds theme blocks (text,
+  countdown, button) in one row that wraps on small screens. When a countdown
+  inside it expires with "Hide" selected, the whole bar hides.
+  @example
+  <!-- Header group > Add section > Promo bar, then add Text, Countdown and Button -->
+{% endcomment %}
+
+{% liquid
+  if section.settings.background_color != blank
+    render 'contrast-override', background_color: section.settings.background_color, section_id: section.id
+  endif
+%}
+
+<div
+  class="promo-bar{% unless section.settings.show_on_mobile %} promo-bar--desktop-only{% endunless %}{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
+  data-countdown-owner
+  style="--promo-bar-padding: {{ section.settings.padding }}px;"
+>
+  <div class="promo-bar__inner page-width-content">
+    {% content_for 'blocks' %}
+  </div>
+</div>
+
+{% stylesheet %}
+  .promo-bar {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    padding-block: var(--promo-bar-padding);
+  }
+
+  .promo-bar:has(countdown-timer[data-expired][data-expired-behavior='hide']),
+  .promo-bar[hidden] {
+    display: none;
+  }
+
+  .promo-bar--desktop-only {
+    @media screen and (max-width: 749px) {
+      display: none;
+    }
+  }
+
+  .promo-bar__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    column-gap: clamp(0.75rem, 3vw, 2rem);
+    row-gap: 0.5rem;
+    padding-inline: var(--page-margin);
+    text-align: center;
+  }
+
+  .promo-bar__inner > * {
+    min-width: 0;
+  }
+
+  .promo-bar__inner :is(p, .text-block) {
+    margin: 0;
+  }
+
+  .promo-bar__inner .button {
+    min-height: 0;
+    padding-block: 0.375rem;
+    padding-inline: 0.875rem;
+    font-size: 0.8125rem;
+  }
+
+  @media screen and (max-width: 749px) {
+    .promo-bar__inner .button,
+    .promo-bar__inner .countdown__label {
+      display: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.promo_bar",
+  "class": "promo-bar-section",
+  "blocks": [{ "type": "@theme" }],
+  "max_blocks": 4,
+  "enabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:settings.background",
+      "default": "#C6B4A5"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_on_mobile",
+      "label": "t:settings.promo_bar_show_on_mobile",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "padding",
+      "label": "t:settings.padding",
+      "min": 0,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.promo_bar"
+    }
+  ]
+}
+{% endschema %}

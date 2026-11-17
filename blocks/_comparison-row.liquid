@@ -1,0 +1,58 @@
+{% doc %}
+  Renders one row of the Comparison table section: a feature name and the value
+  for each compared column. Only used inside `sections/comparison-table.liquid`.
+
+  @example
+  {% content_for 'blocks' %}
+{% enddoc %}
+
+<tr class="comparison-table__row" {{ block.shopify_attributes }}>
+  <th scope="row" class="comparison-table__feature">{{ block.settings.feature | escape }}</th>
+  <td class="comparison-table__value comparison-table__value--brand">
+    {%- if block.settings.brand_value != blank -%}
+      {{ block.settings.brand_value | escape }}
+    {%- else -%}
+      <span aria-hidden="true">&mdash;</span><span class="visually-hidden">{{ 'blocks.comparison_table.not_offered' | t }}</span>
+    {%- endif -%}
+  </td>
+  <td class="comparison-table__value">
+    {%- if block.settings.other_value != blank -%}
+      {{ block.settings.other_value | escape }}
+    {%- else -%}
+      <span aria-hidden="true">&mdash;</span><span class="visually-hidden">{{ 'blocks.comparison_table.not_offered' | t }}</span>
+    {%- endif -%}
+  </td>
+</tr>
+
+{% schema %}
+{
+  "name": "t:names.comparison_row",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "feature",
+      "label": "t:settings.comparison_feature",
+      "default": "Free shipping"
+    },
+    {
+      "type": "text",
+      "id": "brand_value",
+      "label": "t:settings.comparison_brand_value",
+      "info": "t:info.comparison_blank_value",
+      "default": "Yes"
+    },
+    {
+      "type": "text",
+      "id": "other_value",
+      "label": "t:settings.comparison_other_value",
+      "info": "t:info.comparison_blank_value"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.comparison_row"
+    }
+  ]
+}
+{% endschema %}

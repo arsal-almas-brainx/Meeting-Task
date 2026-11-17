@@ -135,6 +135,7 @@
     --theme-drawer-width: 30rem;
     --narrow-content-width: 36rem;
     --normal-content-width: 42rem;
+    --compact-page-width: 77rem;
     --narrow-page-width: 90rem;
     --normal-page-width: 120rem;
     --wide-page-width: 150rem;
@@ -664,6 +665,27 @@
     --cart-secondary-font-style: var(--font-{{ settings.cart_price_font }}--style);
     --cart-secondary-font-weight: var(--font-{{ settings.cart_price_font }}--weight);
   }
+
+  {%- comment -%}
+    Optional mobile heading scale. Large presets keep a 20px floor so headings stay readable.
+    At the default (100%) nothing is emitted and the presets above apply unchanged.
+  {%- endcomment -%}
+  {%- assign mobile_heading_scale = settings.type_mobile_heading_scale | default: 100 -%}
+  {%- if mobile_heading_scale < 100 -%}
+    @media screen and (max-width: 749px) {
+      :root {
+        {%- assign heading_presets = 'h1,h2,h3,h4' | split: ',' -%}
+        {%- for preset_name in heading_presets -%}
+          {%- assign size_setting = 'type_size_' | append: preset_name -%}
+          {%- assign size_value = settings[size_setting] | times: 1 -%}
+          {%- if size_value >= 24 -%}
+            {%- assign scaled_size = size_value | times: mobile_heading_scale | divided_by: 100.0 | at_least: 20 | divided_by: 16.0 %}
+            --font-size--{{ preset_name }}: {{ scaled_size }}rem;
+          {%- endif -%}
+        {%- endfor %}
+      }
+    }
+  {%- endif %}
 
   .custom-color-quick-add {
     --quick-add-background: {{ settings.quick_add_background }};

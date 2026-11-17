@@ -38,7 +38,8 @@
         "divider_color": "{{ settings.color_palette.color2 }}",
         "padding-block-start": 15,
         "padding-block-end": 15
-      }
+      },
+      "disabled": true
     },
     "header_section": {
       "type": "header",
@@ -57,8 +58,8 @@
           "type": "_header-menu",
           "static": true,
           "settings": {
-            "menu": "main-menu",
-            "type_font_primary_size": "0.875rem",
+            "menu": "shopx-main-menu",
+            "type_font_primary_size": "1rem",
             "menu_font_style": "inverse",
             "type_font_primary_link": "body",
             "type_case_primary_link": "none",
@@ -76,14 +77,14 @@
       },
       "settings": {
         "logo_position": "left",
-        "menu_position": "left",
+        "menu_position": "center",
         "menu_row": "top",
         "show_search": true,
         "search_position": "right",
         "search_row": "top",
-        "show_country": true,
+        "show_country": false,
         "country_selector_style": false,
-        "show_language": true,
+        "show_language": false,
         "localization_font": "heading",
         "localization_font_size": "0.875rem",
         "localization_position": "right",
@@ -91,18 +92,70 @@
         "section_width": "page-width",
         "section_height": "standard",
         "enable_sticky_header": "always",
-        "divider_width": 0,
-        "divider_size": "page-width",
+        "divider_width": 1,
+        "divider_size": "full-width",
         "border_width": 0,
         "background_color_top": "{{ settings.color_palette.background }}",
         "enable_transparent_header_home": false,
         "enable_transparent_header_product": false,
         "enable_transparent_header_collection": false
       }
+    },
+    "promo_bar_shopx": {
+      "type": "promo-bar",
+      "blocks": {
+        "promo_text": {
+          "type": "text",
+          "settings": {
+            "text": "<p><strong>UPTO 50% OFF!! HURRY UP! OFFER ENDS IN</strong></p>",
+            "width": "fit-content",
+            "alignment": "center",
+            "type_preset": "custom",
+            "font": "var(--font-subheading--family)",
+            "font_size": "1rem",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "uppercase",
+            "wrap": "pretty"
+          }
+        },
+        "promo_countdown": {
+          "type": "countdown",
+          "settings": {
+            "end_date": "2026-11-30 23:59",
+            "expired_behavior": "hide",
+            "size": "small",
+            "show_labels": true,
+            "text_color": "#1F1F1F"
+          }
+        },
+        "promo_button": {
+          "type": "button",
+          "settings": {
+            "label": "Shop Now",
+            "link": "shopify://collections/shopx-all",
+            "open_in_new_tab": false,
+            "style_class": "button",
+            "width": "fit-content",
+            "width_mobile": "fit-content"
+          }
+        }
+      },
+      "block_order": [
+        "promo_text",
+        "promo_countdown",
+        "promo_button"
+      ],
+      "settings": {
+        "background_color": "#C6B4A5",
+        "padding": 14,
+        "show_on_mobile": false
+      }
     }
   },
   "order": [
     "header_announcements_9jGBFp",
+    "promo_bar_shopx",
     "header_section"
   ]
 }

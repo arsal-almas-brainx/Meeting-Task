@@ -1,0 +1,254 @@
+{% comment %}
+  Section contract.
+  Lays out any theme blocks (groups, images, icons, text) in an even grid with
+  separate desktop and mobile column counts. Reuses the shared `section` wrapper
+  for colors, width and spacing, so it behaves like the stock Section.
+  @example
+  <!-- Add "Content grid", then add 4 Group blocks (icon + text) for a USP row -->
+{% endcomment %}
+
+{% capture children %}
+  <div
+    class="content-grid content-grid--{{ section.settings.mobile_layout }}{% if section.settings.media_ratio != 'block' %} content-grid--ratio{% endif %}{% if section.settings.hover_icon != 'none' %} content-grid--hover-{{ section.settings.hover_icon }}{% endif %}"
+    style="
+      --content-grid-ratio: {{ section.settings.media_ratio }};
+      --content-grid-columns: {{ section.settings.columns }};
+      --content-grid-columns-mobile: {{ section.settings.mobile_columns }};
+      --content-grid-column-gap: {{ section.settings.column_gap }}px;
+      --content-grid-row-gap: {{ section.settings.row_gap }}px;
+      --content-grid-column-gap-mobile: {{ section.settings.column_gap_mobile }}px;
+    "
+  >
+    {% content_for 'blocks' %}
+  </div>
+{% endcapture %}
+
+{% render 'section',
+  section: section,
+  children: children,
+  section_id: section.id,
+  background_color: section.settings.background_color
+%}
+
+{% stylesheet %}
+  .content-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--content-grid-columns-mobile), minmax(0, 1fr));
+    column-gap: var(--content-grid-column-gap-mobile);
+    row-gap: var(--content-grid-row-gap);
+    inline-size: 100%;
+    min-inline-size: 0;
+
+    @media screen and (min-width: 750px) {
+      grid-template-columns: repeat(var(--content-grid-columns), minmax(0, 1fr));
+      column-gap: var(--content-grid-column-gap);
+    }
+  }
+
+  .content-grid > * {
+    min-inline-size: 0;
+    inline-size: 100%;
+  }
+
+  /* Horizontal scroll on small screens when there are more items than mobile columns */
+  .content-grid--scroll {
+    @media screen and (max-width: 749px) {
+      grid-template-columns: none;
+      grid-auto-flow: column;
+      grid-auto-columns: calc((100% - (var(--content-grid-columns-mobile) - 1) * var(--content-grid-column-gap-mobile)) / var(--content-grid-columns-mobile));
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+  }
+
+  .content-grid--scroll > * {
+    scroll-snap-align: start;
+  }
+
+  /* Optional shared media ratio: overrides each image block's own ratio so cards line up */
+  .content-grid--ratio .image-block,
+  .content-grid--ratio .image-block [style*='--ratio'] {
+    --ratio: var(--content-grid-ratio) !important;
+  }
+
+  .content-grid--ratio .image-block img {
+    object-fit: cover;
+  }
+
+  /* Optional Instagram icon revealed on hover/focus over each linked item */
+  .content-grid--hover-instagram > * {
+    position: relative;
+  }
+
+  .content-grid--hover-instagram > *::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgb(0 0 0 / 0.25);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.6'%3E%3Crect x='3' y='3' width='18' height='18' rx='5'/%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Ccircle cx='17.5' cy='6.5' r='1' fill='white' stroke='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 48px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--animation-speed, 0.2s) var(--animation-easing, ease);
+  }
+
+  .content-grid--hover-instagram > *:is(:hover, :focus-within)::after {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .content-grid--hover-instagram > *::after {
+      transition: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.content_grid",
+  "class": "section-wrapper",
+  "blocks": [{ "type": "@theme" }, { "type": "@app" }],
+  "disabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:content.layout"
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "t:settings.columns",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "mobile_columns",
+      "label": "t:settings.mobile_columns",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "type": "select",
+      "id": "mobile_layout",
+      "label": "t:settings.content_grid_mobile_layout",
+      "options": [
+        { "value": "wrap", "label": "t:options.grid" },
+        { "value": "scroll", "label": "t:options.carousel" }
+      ],
+      "default": "wrap"
+    },
+    {
+      "type": "select",
+      "id": "media_ratio",
+      "label": "t:settings.content_grid_media_ratio",
+      "options": [
+        { "value": "block", "label": "t:options.content_grid_ratio_block" },
+        { "value": "1", "label": "t:options.square" },
+        { "value": "4 / 5", "label": "t:options.portrait" },
+        { "value": "5 / 7", "label": "t:options.content_grid_ratio_tall" }
+      ],
+      "default": "block"
+    },
+    {
+      "type": "select",
+      "id": "hover_icon",
+      "label": "t:settings.content_grid_hover_icon",
+      "options": [
+        { "value": "none", "label": "t:options.none" },
+        { "value": "instagram", "label": "t:options.content_grid_hover_instagram" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "range",
+      "id": "column_gap",
+      "label": "t:settings.horizontal_gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "column_gap_mobile",
+      "label": "t:settings.content_grid_mobile_gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "row_gap",
+      "label": "t:settings.vertical_gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:settings.width",
+      "options": [
+        { "value": "page-width", "label": "t:options.page" },
+        { "value": "full-width", "label": "t:options.full" }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "header",
+      "content": "t:content.colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:settings.background",
+      "alpha": true
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.content_grid",
+      "category": "t:categories.layout"
+    }
+  ]
+}
+{% endschema %}

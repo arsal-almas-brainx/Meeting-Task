@@ -1,0 +1,479 @@
+{% comment %}
+  Section contract.
+  Promotional hero or feature card. Desktop: content panel and image side by side,
+  full width or contained to the page width. Mobile: the content sits over the image
+  (optional separate mobile image), or stacks below it.
+  Content comes from theme blocks (text, button, etc.) so copy stays merchant-owned.
+  @example
+  <!-- Add "Promo hero", pick an image, then add Text and Button blocks -->
+{% endcomment %}
+
+{% liquid
+  assign desktop_image = section.settings.image
+  assign mobile_image = section.settings.image_mobile | default: desktop_image
+  # Image alignment: the focal point set in Files, or a fixed vertical anchor
+  case section.settings.image_position
+    when 'top'
+      assign focal_desktop = 'center top'
+      assign focal_mobile = 'center top'
+    when 'bottom'
+      assign focal_desktop = 'center bottom'
+      assign focal_mobile = 'center bottom'
+    when 'center'
+      assign focal_desktop = 'center center'
+      assign focal_mobile = 'center center'
+    else
+      assign focal_desktop = desktop_image.presentation.focal_point | default: 'center center'
+      assign focal_mobile = mobile_image.presentation.focal_point | default: 'center center'
+  endcase
+  assign fetch_priority = 'auto'
+  assign loading = 'lazy'
+  if section.index == 1
+    assign fetch_priority = 'high'
+    assign loading = 'eager'
+  endif
+
+  assign media_sizes = '(min-width: 750px) ' | append: section.settings.media_width | append: 'vw, 100vw'
+
+  if section.settings.background_color != blank
+    render 'contrast-override', background_color: section.settings.background_color, section_id: section.id
+  endif
+%}
+
+<div
+  class="section section--{{ section.settings.section_width }} promo-hero-wrapper"
+  style="
+    --promo-hero-outer-start: {{ section.settings.outer_spacing_top }}px;
+    --promo-hero-outer-end: {{ section.settings.outer_spacing_bottom }}px;
+  "
+>
+<div
+  class="promo-hero promo-hero--media-{{ section.settings.media_position }} promo-hero--mobile-{{ section.settings.mobile_layout }}{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
+  style="
+    --promo-hero-min-height: {{ section.settings.min_height }}px;
+    --promo-hero-mobile-height: {{ section.settings.mobile_height }}svh;
+    --promo-hero-overlay: {{ section.settings.mobile_overlay_opacity | divided_by: 100.0 }};
+    --promo-hero-mobile-text: {{ section.settings.mobile_text_color }};
+    --promo-hero-focal: {{ focal_desktop }};
+    --promo-hero-focal-mobile: {{ focal_mobile }};
+    --promo-hero-media-width: {{ section.settings.media_width }}%;
+    --promo-hero-content-inset: {{ section.settings.content_padding }}px;
+    --promo-hero-mobile-body: {{ section.settings.mobile_body_size }}px;
+  "
+>
+  <div class="promo-hero__media">
+    {% if desktop_image != blank or mobile_image != blank %}
+      <picture>
+        {% if mobile_image != blank %}
+          <source
+            media="(max-width: 749px)"
+            srcset="
+              {{ mobile_image | image_url: width: 416 }} 416w,
+              {{ mobile_image | image_url: width: 600 }} 600w,
+              {{ mobile_image | image_url: width: 800 }} 800w,
+              {{ mobile_image | image_url: width: 1200 }} 1200w
+            "
+            sizes="100vw"
+            width="{{ mobile_image.width }}"
+            height="{{ mobile_image.height }}"
+          >
+        {% endif %}
+        {% if desktop_image != blank %}
+          {{
+            desktop_image
+            | image_url: width: 2400
+            | image_tag:
+              widths: '600, 800, 1000, 1200, 1600, 2000, 2400',
+              sizes: media_sizes,
+              class: 'promo-hero__image',
+              loading: loading,
+              fetchpriority: fetch_priority,
+              alt: desktop_image.alt
+          }}
+        {% else %}
+          {{
+            mobile_image
+            | image_url: width: 1200
+            | image_tag:
+              sizes: '100vw',
+              class: 'promo-hero__image',
+              loading: loading,
+              fetchpriority: fetch_priority,
+              alt: mobile_image.alt
+          }}
+        {% endif %}
+      </picture>
+    {% else %}
+      {{ 'hero-apparel-1' | placeholder_svg_tag: 'promo-hero__image promo-hero__placeholder' }}
+    {% endif %}
+  </div>
+
+  <div class="promo-hero__content">
+    <div
+      class="promo-hero__inner spacing-style"
+      style="{% render 'spacing-style', settings: section.settings %}"
+    >
+      {% content_for 'blocks' %}
+    </div>
+  </div>
+</div>
+</div>
+
+{% stylesheet %}
+  .promo-hero-wrapper {
+    padding-block: var(--promo-hero-outer-start) var(--promo-hero-outer-end);
+  }
+
+  .promo-hero-wrapper.section--page-width > .promo-hero {
+    grid-column: 2;
+  }
+
+  .promo-hero-wrapper.section--full-width > .promo-hero {
+    grid-column: 1 / -1;
+  }
+
+  .promo-hero {
+
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    overflow: hidden;
+
+    @media screen and (min-width: 750px) {
+      grid-template-columns: calc(100% - var(--promo-hero-media-width)) var(--promo-hero-media-width);
+      min-height: var(--promo-hero-min-height);
+    }
+  }
+
+  .promo-hero__media {
+    position: relative;
+    min-width: 0;
+    min-height: 100%;
+  }
+
+  .promo-hero__media picture,
+  .promo-hero__image {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    object-position: var(--promo-hero-focal, center top);
+
+    @media screen and (max-width: 749px) {
+      object-position: var(--promo-hero-focal-mobile, center top);
+    }
+  }
+
+  .promo-hero__placeholder {
+    background-color: rgb(var(--color-foreground-rgb) / var(--opacity-5));
+  }
+
+  .promo-hero__content {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .promo-hero__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    inline-size: 100%;
+    padding-inline: var(--page-margin);
+    overflow-wrap: anywhere;
+
+    @media screen and (min-width: 750px) {
+      max-inline-size: calc(36rem + var(--promo-hero-content-inset));
+      padding-inline: var(--promo-hero-content-inset) var(--page-margin);
+    }
+  }
+
+  @media screen and (min-width: 750px) {
+    .promo-hero--media-right .promo-hero__media {
+      order: 2;
+    }
+
+    .promo-hero__media {
+      position: absolute;
+      inset-block: 0;
+      inline-size: var(--promo-hero-media-width);
+    }
+
+    .promo-hero--media-left {
+      grid-template-columns: var(--promo-hero-media-width) calc(100% - var(--promo-hero-media-width));
+    }
+
+    .promo-hero--media-right .promo-hero__media {
+      inset-inline-end: 0;
+    }
+
+    .promo-hero--media-left .promo-hero__media {
+      inset-inline-start: 0;
+    }
+
+    .promo-hero--media-left .promo-hero__content {
+      grid-column: 2;
+    }
+
+    .promo-hero--media-right .promo-hero__content {
+      grid-column: 1;
+    }
+  }
+
+  /* Mobile: text over image */
+  @media screen and (max-width: 749px) {
+    .promo-hero--mobile-overlay {
+      grid-template-areas: 'stack';
+      min-height: var(--promo-hero-mobile-height);
+    }
+
+    .promo-hero--mobile-overlay > * {
+      grid-area: stack;
+    }
+
+    /* Media fills the section; content and min-height decide the height */
+    .promo-hero--mobile-overlay .promo-hero__media {
+      position: absolute;
+      inset: 0;
+    }
+
+    .promo-hero--mobile-overlay .promo-hero__media::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgb(0 0 0 / var(--promo-hero-overlay)), transparent 85%);
+    }
+
+    .promo-hero--mobile-overlay .promo-hero__content {
+      position: relative;
+      z-index: 1;
+      align-items: flex-start;
+      color: var(--promo-hero-mobile-text);
+    }
+
+    .promo-hero--mobile-overlay .promo-hero__content :is(p, h1, h2, h3, h4, h5, h6, .text-block) {
+      color: var(--promo-hero-mobile-text);
+    }
+
+    /* Body copy (non-heading text blocks) sized for the smaller overlay */
+    .promo-hero--mobile-overlay .promo-hero__inner .text-block:is(.custom, .paragraph, .rte),
+    .promo-hero--mobile-overlay .promo-hero__inner .text-block:is(.custom, .paragraph, .rte) p {
+      --font-size: var(--promo-hero-mobile-body);
+      font-size: var(--promo-hero-mobile-body);
+    }
+
+    /* Primary buttons invert over imagery so they stay legible */
+    .promo-hero--mobile-overlay .promo-hero__inner .button:not(.button-secondary, .button-unstyled) {
+      background-color: var(--color-primary-button-text);
+      color: var(--color-primary-button-background);
+      border-color: var(--color-primary-button-text);
+    }
+
+    .promo-hero--mobile-stack .promo-hero__media {
+      aspect-ratio: 4 / 5;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.promo_hero",
+  "class": "section-wrapper",
+  "blocks": [{ "type": "@theme" }, { "type": "@app" }],
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:settings.image"
+    },
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "t:settings.promo_hero_image_position",
+      "options": [
+        { "value": "focal", "label": "t:options.promo_hero_focal_point" },
+        { "value": "top", "label": "t:options.top" },
+        { "value": "center", "label": "t:options.center" },
+        { "value": "bottom", "label": "t:options.bottom" }
+      ],
+      "default": "focal"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_mobile",
+      "label": "t:settings.mobile_image",
+      "info": "t:info.promo_hero_mobile_image"
+    },
+    {
+      "type": "select",
+      "id": "media_position",
+      "label": "t:settings.media_position",
+      "options": [
+        { "value": "left", "label": "t:options.left" },
+        { "value": "right", "label": "t:options.right" }
+      ],
+      "default": "right"
+    },
+    {
+      "type": "range",
+      "id": "media_width",
+      "label": "t:settings.promo_hero_media_width",
+      "min": 30,
+      "max": 70,
+      "step": 1,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:settings.width",
+      "options": [
+        { "value": "full-width", "label": "t:options.full" },
+        { "value": "page-width", "label": "t:options.page" }
+      ],
+      "default": "full-width"
+    },
+    {
+      "type": "range",
+      "id": "content_padding",
+      "label": "t:settings.promo_hero_content_inset",
+      "min": 0,
+      "max": 200,
+      "step": 2,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "range",
+      "id": "min_height",
+      "label": "t:settings.promo_hero_min_height",
+      "min": 300,
+      "max": 900,
+      "step": 10,
+      "unit": "px",
+      "default": 600
+    },
+    {
+      "type": "header",
+      "content": "t:content.mobile_layout"
+    },
+    {
+      "type": "select",
+      "id": "mobile_layout",
+      "label": "t:settings.promo_hero_mobile_layout",
+      "options": [
+        { "value": "overlay", "label": "t:options.promo_hero_overlay" },
+        { "value": "stack", "label": "t:options.promo_hero_stack" }
+      ],
+      "default": "overlay"
+    },
+    {
+      "type": "range",
+      "id": "mobile_height",
+      "label": "t:settings.promo_hero_mobile_height",
+      "min": 30,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 50,
+      "visible_if": "{{ section.settings.mobile_layout == 'overlay' }}"
+    },
+    {
+      "type": "color",
+      "id": "mobile_text_color",
+      "label": "t:settings.text_color",
+      "default": "#FFFFFF",
+      "visible_if": "{{ section.settings.mobile_layout == 'overlay' }}"
+    },
+    {
+      "type": "range",
+      "id": "mobile_body_size",
+      "label": "t:settings.promo_hero_mobile_body_size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 16,
+      "visible_if": "{{ section.settings.mobile_layout == 'overlay' }}"
+    },
+    {
+      "type": "range",
+      "id": "mobile_overlay_opacity",
+      "label": "t:settings.overlay_opacity",
+      "min": 0,
+      "max": 80,
+      "step": 5,
+      "unit": "%",
+      "default": 25,
+      "visible_if": "{{ section.settings.mobile_layout == 'overlay' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:settings.background",
+      "default": "#FDF0E3"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "outer_spacing_top",
+      "label": "t:settings.promo_hero_outer_top",
+      "min": 0,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "outer_spacing_bottom",
+      "label": "t:settings.promo_hero_outer_bottom",
+      "min": 0,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.promo_hero",
+      "category": "t:categories.banners"
+    }
+  ]
+}
+{% endschema %}

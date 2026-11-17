@@ -1,0 +1,202 @@
+{% doc %}
+  Renders a live countdown (days, hours, minutes, seconds) to a merchant-set end date.
+  The end date is read in the shop's time zone. Liquid renders the starting values;
+  `countdown-timer.js` keeps them live. When the date is blank or invalid, nothing renders
+  on the storefront and a hint renders in the theme editor.
+
+  @example
+  {% content_for 'block', type: 'countdown', id: 'countdown' %}
+{% enddoc %}
+
+{% liquid
+  assign end_input = block.settings.end_date | strip
+  assign end_ts = 0
+  if end_input != blank
+    assign end_ts = end_input | date: '%s' | plus: 0
+  endif
+  assign now_ts = 'now' | date: '%s' | plus: 0
+  assign remaining = end_ts | minus: now_ts | at_least: 0
+  assign is_expired = false
+  if end_ts > 0 and remaining == 0
+    assign is_expired = true
+  endif
+
+  assign days = remaining | divided_by: 86400
+  assign hours = remaining | modulo: 86400 | divided_by: 3600
+  assign minutes = remaining | modulo: 3600 | divided_by: 60
+  assign seconds = remaining | modulo: 60
+  assign units = 'days,hours,minutes,seconds' | split: ','
+%}
+
+{% if end_ts > 0 %}
+  <script src="{{ 'countdown-timer.js' | asset_url }}" type="module" fetchpriority="low"></script>
+  <countdown-timer
+    class="countdown countdown--{{ block.settings.size }}"
+    data-end="{{ end_ts }}"
+    data-expired-behavior="{{ block.settings.expired_behavior }}"
+    {% if is_expired %}
+      data-expired
+    {% endif %}
+    {% if is_expired and block.settings.expired_behavior == 'hide' %}
+      hidden
+    {% endif %}
+    role="timer"
+    aria-label="{{ 'blocks.countdown.label' | t }}"
+    {% if block.settings.text_color != blank %}
+      style="--countdown-color: {{ block.settings.text_color }};"
+    {% endif %}
+    {{ block.shopify_attributes }}
+  >
+    {% for unit in units %}
+      {% case unit %}
+        {% when 'days' %}
+          {% assign value = days %}
+          {% assign unit_label = 'blocks.countdown.days' | t %}
+        {% when 'hours' %}
+          {% assign value = hours %}
+          {% assign unit_label = 'blocks.countdown.hours' | t %}
+        {% when 'minutes' %}
+          {% assign value = minutes %}
+          {% assign unit_label = 'blocks.countdown.minutes' | t %}
+        {% else %}
+          {% assign value = seconds %}
+          {% assign unit_label = 'blocks.countdown.seconds' | t %}
+      {% endcase %}
+      <span class="countdown__unit">
+        <span class="countdown__value" ref="{{ unit }}" aria-hidden="true">
+          {%- if value < 10 %}0{% endif %}{{ value -}}
+        </span>
+        {% if block.settings.show_labels %}
+          <span class="countdown__label" aria-hidden="true">{{ unit_label }}</span>
+        {% endif %}
+      </span>
+      {% unless forloop.last %}
+        <span class="countdown__separator" aria-hidden="true">:</span>
+      {% endunless %}
+    {% endfor %}
+    <span class="visually-hidden">
+      {{- 'blocks.countdown.remaining' | t: days: days, hours: hours, minutes: minutes -}}
+    </span>
+  </countdown-timer>
+{% elsif request.design_mode %}
+  <p class="countdown__hint" {{ block.shopify_attributes }}>{{ 'blocks.countdown.invalid_date' | t }}</p>
+{% endif %}
+
+{% stylesheet %}
+  .countdown {
+    --countdown-value-size: var(--font-size--2xl, 2.5rem);
+    --countdown-label-size: var(--font-size--xs, 0.75rem);
+    --countdown-gap: clamp(0.5rem, 2.5vw, 1.75rem);
+
+    display: inline-flex;
+    align-items: flex-start;
+    gap: var(--countdown-gap);
+    color: var(--countdown-color, currentColor);
+    font-variant-numeric: tabular-nums;
+    min-width: 0;
+  }
+
+  .countdown[hidden] {
+    display: none;
+  }
+
+  .countdown--small {
+    --countdown-value-size: 0.875rem;
+    --countdown-label-size: 0.375rem;
+    --countdown-gap: 0.5rem;
+  }
+
+  .countdown--large {
+    --countdown-value-size: clamp(1.5rem, 4.5vw, 3rem);
+    --countdown-label-size: clamp(0.625rem, 1.6vw, 0.875rem);
+    --countdown-gap: clamp(0.75rem, 3vw, 2.25rem);
+  }
+
+  .countdown__unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9em;
+    min-width: 2ch;
+  }
+
+  .countdown__value {
+    font-size: var(--countdown-value-size);
+    line-height: 1;
+    letter-spacing: 0.08em;
+  }
+
+  .countdown__label {
+    font-size: var(--countdown-label-size);
+    line-height: 1;
+  }
+
+  .countdown__separator {
+    /* Line box matches the digits so the colon sits on their vertical centre */
+    font-size: calc(var(--countdown-value-size) * 0.5);
+    line-height: var(--countdown-value-size);
+    font-weight: 700;
+  }
+
+  .countdown--large .countdown__value {
+    font-weight: 500;
+  }
+
+  .countdown__hint {
+    font-size: 0.75rem;
+    opacity: 0.8;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.countdown",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "end_date",
+      "label": "t:settings.countdown_end_date",
+      "info": "t:info.countdown_end_date",
+      "placeholder": "2026-11-30 23:59"
+    },
+    {
+      "type": "select",
+      "id": "expired_behavior",
+      "label": "t:settings.countdown_expired_behavior",
+      "options": [
+        { "value": "zero", "label": "t:options.countdown_show_zero" },
+        { "value": "hide", "label": "t:options.countdown_hide_section" }
+      ],
+      "default": "hide"
+    },
+    {
+      "type": "select",
+      "id": "size",
+      "label": "t:settings.size",
+      "options": [
+        { "value": "small", "label": "t:options.small" },
+        { "value": "large", "label": "t:options.large" }
+      ],
+      "default": "large"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_labels",
+      "label": "t:settings.countdown_show_labels",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:settings.text_color"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.countdown",
+      "category": "t:categories.decorative"
+    }
+  ]
+}
+{% endschema %}
